@@ -103,6 +103,27 @@ We will send you an email to choose a Real-World project. If you face any diffic
 - MongoDB
 - Stripe account for payment processing
 
+### Quick Start Guide for Beginners
+
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd OnlineDonationTracker
+   ```
+
+2. **Install dependencies and start servers**
+   ```bash
+   # Install all dependencies (backend and frontend)
+   npm install
+   
+   # Start both servers with a single command
+   npm start
+   ```
+
+3. **Access the application**
+   - Open your browser and go to http://localhost:3000
+   - You should see the login/register page
+
 ### Environment Variables
 
 Create `.env` files in both the backend and frontend directories:
@@ -188,12 +209,12 @@ npm start
    - Expiry date can be any future date, CVC can be any 3-digit number
    - Use any name and valid email address
 
-### User Credentials for Testing
+## Public URL Information
 
-You can register new users through the application, or use the following test account:
+You can access our deployed application at the following URL:
 
-- **Email**: test@example.com
-- **Password**: password123
+- **Production URL**: [https://donation-tracker.example.com](https://donation-tracker.example.com)
+- **JIRA Board URL**: [https://online-donation-tracker.atlassian.net/jira/software/projects/ODT/boards/1](https://online-donation-tracker.atlassian.net/jira/software/projects/ODT/boards/1)
 
 ## Features
 
