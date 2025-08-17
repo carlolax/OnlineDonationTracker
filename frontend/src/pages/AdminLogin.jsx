@@ -34,13 +34,16 @@ const AdminLogin = () => {
     }
   };
 
+  // Function is defined but not currently used in the UI
+  // Removed to fix ESLint warnings
+  /* 
   const createAdminUser = async () => {
     setError('');
     setMessage('');
     setLoading(true);
     
     try {
-      const response = await axiosInstance.post('/api/auth/register', {
+      await axiosInstance.post('/api/auth/register', {
         name: 'Admin User',
         email: 'admin@example.com',
         password: 'admin123',
@@ -59,6 +62,7 @@ const AdminLogin = () => {
       setLoading(false);
     }
   };
+  */
 
   return (
     <div className="max-w-md mx-auto mt-20">
