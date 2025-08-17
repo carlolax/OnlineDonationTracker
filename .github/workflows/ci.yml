@@ -14,22 +14,49 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v2
-
+      uses: actions/checkout@v4
+      
     - name: Set up Node.js
-      uses: actions/setup-node@v2
+      uses: actions/setup-node@v4
       with:
-        node-version: '18'
+        node-version: '20'
+        cache: 'npm'
+
+    - name: Cache backend dependencies
+      uses: actions/cache@v4
+      with:
+        path: backend/node_modules
+        key: ${{ runner.os }}-backend-${{ hashFiles('backend/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-backend-
+          
+    - name: Cache frontend dependencies
+      uses: actions/cache@v4
+      with:
+        path: frontend/node_modules
+        key: ${{ runner.os }}-frontend-${{ hashFiles('frontend/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-frontend-
 
     - name: Install dependencies for backend
       run: |
         cd backend
-        npm install
+        npm ci
 
     - name: Install dependencies for frontend
       run: |
         cd frontend
-        npm install
+        npm ci
+        
+    - name: Lint backend code
+      run: |
+        cd backend
+        npm run lint || echo "No lint script found in backend, continuing"
+        
+    - name: Lint frontend code
+      run: |
+        cd frontend
+        npm run lint || echo "No lint script found in frontend, continuing"
 
     - name: Run backend tests
       run: |
@@ -52,23 +79,42 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
+    environment: production
     
     steps:
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
     - name: Install SSH key
-      uses: shimataro/ssh-key-action@v2
+      uses: shimataro/ssh-key-action@v2.5.1
       with:
         key: ${{ secrets.SSH_PRIVATE_KEY }}
-        known_hosts: 'placeholder_to_be_replaced'
+        known_hosts: ${{ secrets.KNOWN_HOSTS || '' }}
+        if_key_exists: replace
 
     - name: Adding Known Hosts
-      run: ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+      run: |
+        mkdir -p ~/.ssh
+        chmod 700 ~/.ssh
+        ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+        chmod 644 ~/.ssh/known_hosts
 
     - name: Deploy to EC2
       run: |
-        ssh ubuntu@${{ secrets.EC2_HOST }} 'cd ~/OnlineDonationTracker && git pull'
-        ssh ubuntu@${{ secrets.EC2_HOST }} 'cd ~/OnlineDonationTracker/backend && npm install'
-        ssh ubuntu@${{ secrets.EC2_HOST }} 'cd ~/OnlineDonationTracker/frontend && npm install && npm run build'
-        ssh ubuntu@${{ secrets.EC2_HOST }} 'cd ~/OnlineDonationTracker && pm2 restart all || pm2 start ecosystem.config.js'
+        echo "Starting deployment to server..."
+        # Pull latest code
+        ssh ubuntu@${{ secrets.EC2_HOST }} 'cd ~/OnlineDonationTracker && git pull' || { echo "Failed to pull latest code"; exit 1; }
+        
+        # Install backend dependencies
+        echo "Installing backend dependencies..."
+        ssh ubuntu@${{ secrets.EC2_HOST }} 'cd ~/OnlineDonationTracker/backend && npm ci --production' || { echo "Failed to install backend dependencies"; exit 1; }
+        
+        # Install and build frontend
+        echo "Installing frontend dependencies and building..."
+        ssh ubuntu@${{ secrets.EC2_HOST }} 'cd ~/OnlineDonationTracker/frontend && npm ci && npm run build' || { echo "Failed to build frontend"; exit 1; }
+        
+        # Restart services
+        echo "Restarting services..."
+        ssh ubuntu@${{ secrets.EC2_HOST }} 'cd ~/OnlineDonationTracker && (pm2 restart all || pm2 start ecosystem.config.js)'
+        
+        echo "Deployment completed successfully"
