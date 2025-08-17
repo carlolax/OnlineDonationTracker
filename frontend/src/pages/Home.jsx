@@ -6,7 +6,8 @@ import DonationEventCard from '../components/DonationEventCard';
 
 const Home = () => {
   const { user, isAdmin } = useAuth();
-  const [donationEvents, setDonationEvents] = useState([]);
+  // We're setting the events but only using the derived states (activeDonations and completedDonations)
+  const [, setDonationEvents] = useState([]);
   const [activeDonations, setActiveDonations] = useState([]);
   const [completedDonations, setCompletedDonations] = useState([]);
   const [loading, setLoading] = useState(true);

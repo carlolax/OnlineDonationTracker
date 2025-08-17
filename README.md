@@ -1,6 +1,6 @@
 # Online Donation Tracker
 
-A full-stack web application for NGOs to manage fundraising campaigns and accept online donations. Built with the MERN stack (MongoDB, Express, React, Node.js) and integrated with Stripe for payment processing.
+A full-stack web application for organizations to manage fundraising campaigns and accept online donations. Built with the MERN stack (MongoDB, Express, React, Node.js) and integrated with Stripe for payment processing.
 
 Assignment: **Software requirements analysis and design (Full-Stack CRUD Application Development with DevOps Practices)** - (Total Marks **20**)
 
@@ -103,6 +103,27 @@ We will send you an email to choose a Real-World project. If you face any diffic
 - MongoDB
 - Stripe account for payment processing
 
+### Quick Start Guide for Beginners
+
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd OnlineDonationTracker
+   ```
+
+2. **Install dependencies and start servers**
+   ```bash
+   # Install all dependencies (backend and frontend)
+   npm install
+   
+   # Start both servers with a single command
+   npm start
+   ```
+
+3. **Access the application**
+   - Open your browser and go to http://localhost:3000
+   - You should see the login/register page
+
 ### Environment Variables
 
 Create `.env` files in both the backend and frontend directories:
@@ -188,12 +209,275 @@ npm start
    - Expiry date can be any future date, CVC can be any 3-digit number
    - Use any name and valid email address
 
-### User Credentials for Testing
+## Deployment Guide for EC2
 
-You can register new users through the application, or use the following test account:
+### 1. Setting Up an EC2 Instance
 
-- **Email**: test@example.com
-- **Password**: password123
+1. **Launch an EC2 instance**:
+   - Log in to AWS Console and navigate to EC2
+   - Click "Launch Instance"
+   - Choose Amazon Linux 2 or Ubuntu Server 20.04 LTS
+   - Select t2.micro (free tier eligible) or larger based on needs
+   - Configure security groups (open ports 22, 80, 443, 5001)
+   - Create or select an existing key pair (.pem file)
+   - Launch the instance
+
+2. **Connect to your instance**:
+   ```bash
+   chmod 400 your-key-pair.pem
+   ssh -i your-key-pair.pem ec2-user@your-instance-public-dns
+   ```
+   *Note: Use `ubuntu` instead of `ec2-user` for Ubuntu instances*
+
+### 2. Set Up the Environment
+
+1. **Update package lists and install dependencies**:
+   ```bash
+   # For Amazon Linux
+   sudo yum update -y
+   sudo yum install git -y
+   
+   # For Ubuntu
+   sudo apt update
+   sudo apt install git -y
+   ```
+
+2. **Install Node.js**:
+   ```bash
+   # Install NVM (Node Version Manager)
+   curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
+   source ~/.bashrc
+   
+   # Install Node.js v16
+   nvm install 16
+   nvm use 16
+   ```
+
+3. **Install MongoDB** (or use MongoDB Atlas):
+   ```bash
+   # For MongoDB Atlas: Use your connection string
+   
+   # For local MongoDB on Ubuntu:
+   sudo apt install -y mongodb
+   sudo systemctl start mongodb
+   sudo systemctl enable mongodb
+   ```
+
+### 3. Deploy the Application
+
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/your-username/OnlineDonationTracker.git
+   cd OnlineDonationTracker
+   ```
+
+2. **Set up environment variables**:
+   ```bash
+   # For backend
+   cd backend
+   nano .env
+   # Add your environment variables and save (Ctrl+X, Y, Enter)
+   ```
+   
+   Include the following in your .env file:
+   ```
+   MONGO_URI=your_mongodb_connection_string
+   JWT_SECRET=your_jwt_secret_key
+   PORT=5001
+   STRIPE_SECRET_KEY=your_stripe_secret_key
+   STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
+   STRIPE_WEBHOOK_SECRET=your_stripe_webhook_secret
+   ```
+
+3. **Install dependencies**:
+   ```bash
+   # Install backend dependencies
+   npm install
+   
+   # Install frontend dependencies
+   cd ../frontend
+   npm install
+   ```
+
+4. **Build the frontend**:
+   ```bash
+   npm run build
+   ```
+
+5. **Install PM2 to manage Node.js processes**:
+   ```bash
+   npm install pm2 -g
+   ```
+
+6. **Start the backend server**:
+   ```bash
+   cd ../backend
+   pm2 start server.js --name "donation-tracker-backend"
+   ```
+
+7. **Serve the frontend using NGINX**:
+   ```bash
+   # Install NGINX
+   sudo yum install nginx -y  # For Amazon Linux
+   # OR
+   sudo apt install nginx -y  # For Ubuntu
+   
+   # Start NGINX
+   sudo systemctl start nginx
+   sudo systemctl enable nginx
+   ```
+
+8. **Configure NGINX**:
+   ```bash
+   sudo nano /etc/nginx/sites-available/donation-tracker
+   ```
+   
+   Add the following configuration:
+   ```nginx
+   server {
+       listen 80;
+       server_name your-domain.com www.your-domain.com;
+       
+       # Frontend
+       location / {
+           root /home/ec2-user/OnlineDonationTracker/frontend/build;
+           try_files $uri /index.html;
+       }
+       
+       # Backend API
+       location /api {
+           proxy_pass http://localhost:5001;
+           proxy_http_version 1.1;
+           proxy_set_header Upgrade $http_upgrade;
+           proxy_set_header Connection 'upgrade';
+           proxy_set_header Host $host;
+           proxy_cache_bypass $http_upgrade;
+       }
+   }
+   ```
+
+9. **Enable the site**:
+   ```bash
+   # For Ubuntu
+   sudo ln -s /etc/nginx/sites-available/donation-tracker /etc/nginx/sites-enabled/
+   
+   # For Amazon Linux
+   sudo mkdir -p /etc/nginx/sites-enabled
+   sudo ln -s /etc/nginx/sites-available/donation-tracker /etc/nginx/sites-enabled/
+   ```
+
+10. **Test and reload NGINX**:
+    ```bash
+    sudo nginx -t
+    sudo systemctl reload nginx
+    ```
+
+### 4. Set Up Domain and SSL
+
+1. **Configure your domain**:
+   - Go to your domain registrar
+   - Create an A record pointing to your EC2 instance's public IP
+
+2. **Install Certbot for free SSL certificate**:
+   ```bash
+   # For Ubuntu
+   sudo apt install certbot python3-certbot-nginx -y
+   
+   # For Amazon Linux
+   sudo amazon-linux-extras install epel -y
+   sudo yum install certbot python-certbot-nginx -y
+   ```
+
+3. **Get SSL certificate**:
+   ```bash
+   sudo certbot --nginx -d your-domain.com -d www.your-domain.com
+   ```
+
+### 5. Set Up CI/CD with GitHub Actions
+
+1. **Create a deploy key**:
+   ```bash
+   ssh-keygen -t rsa -b 4096 -C "github-actions-deploy"
+   # Save to ~/.ssh/github-actions-deploy
+   # No passphrase
+   ```
+
+2. **Add the public key to authorized keys**:
+   ```bash
+   cat ~/.ssh/github-actions-deploy.pub >> ~/.ssh/authorized_keys
+   ```
+
+3. **Get the private key**:
+   ```bash
+   cat ~/.ssh/github-actions-deploy
+   ```
+   Copy this for the GitHub secrets
+
+4. **In your GitHub repository**:
+   - Go to Settings > Secrets and Variables > Actions
+   - Add secrets:
+     - `EC2_SSH_KEY`: The private key content
+     - `EC2_HOST`: Your EC2 public DNS or IP
+     - `EC2_USERNAME`: ec2-user or ubuntu
+
+5. **Create GitHub Actions workflow**:
+   Create `.github/workflows/deploy.yml` in your repository:
+   ```yaml
+   name: Deploy to EC2
+   
+   on:
+     push:
+       branches: [main]
+   
+   jobs:
+     deploy:
+       runs-on: ubuntu-latest
+       steps:
+         - uses: actions/checkout@v2
+         
+         - name: Setup Node.js
+           uses: actions/setup-node@v2
+           with:
+             node-version: '16'
+             
+         - name: Install frontend dependencies
+           run: |
+             cd frontend
+             npm ci
+             
+         - name: Build frontend
+           run: |
+             cd frontend
+             npm run build
+             
+         - name: Deploy to EC2
+           uses: appleboy/scp-action@master
+           with:
+             host: ${{ secrets.EC2_HOST }}
+             username: ${{ secrets.EC2_USERNAME }}
+             key: ${{ secrets.EC2_SSH_KEY }}
+             source: "./"
+             target: "/home/${{ secrets.EC2_USERNAME }}/OnlineDonationTracker"
+             
+         - name: Execute remote commands
+           uses: appleboy/ssh-action@master
+           with:
+             host: ${{ secrets.EC2_HOST }}
+             username: ${{ secrets.EC2_USERNAME }}
+             key: ${{ secrets.EC2_SSH_KEY }}
+             script: |
+               cd /home/${{ secrets.EC2_USERNAME }}/OnlineDonationTracker
+               cd backend
+               npm ci
+               pm2 restart donation-tracker-backend || pm2 start server.js --name "donation-tracker-backend"
+   ```
+
+## Public URL Information
+
+You can access our deployed application at the following URL:
+
+- **Production URL**: [https://donation-tracker.example.com](https://donation-tracker.example.com)
+- **JIRA Board URL**: [https://online-donation-tracker.atlassian.net/jira/software/projects/ODT/boards/1](https://online-donation-tracker.atlassian.net/jira/software/projects/ODT/boards/1)
 
 ## Features
 

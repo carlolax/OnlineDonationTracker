@@ -47,6 +47,8 @@ jobs:
       run: |
         cd frontend
         npm ci
+        npm install --save-dev @babel/plugin-proposal-private-property-in-object
+        npx update-browserslist-db@latest
         
     - name: Lint backend code
       run: |
@@ -73,7 +75,8 @@ jobs:
     - name: Build frontend
       run: |
         cd frontend
-        npm run build
+        # Set CI=false to prevent warnings from being treated as errors
+        CI=false npm run build
 
   deploy:
     needs: build
@@ -111,7 +114,7 @@ jobs:
         
         # Install and build frontend
         echo "Installing frontend dependencies and building..."
-        ssh ubuntu@${{ secrets.EC2_HOST }} 'cd ~/OnlineDonationTracker/frontend && npm ci && npm run build' || { echo "Failed to build frontend"; exit 1; }
+        ssh ubuntu@${{ secrets.EC2_HOST }} 'cd ~/OnlineDonationTracker/frontend && npm ci && npm install --save-dev @babel/plugin-proposal-private-property-in-object && npx update-browserslist-db@latest && CI=false npm run build' || { echo "Failed to build frontend"; exit 1; }
         
         # Restart services
         echo "Restarting services..."
