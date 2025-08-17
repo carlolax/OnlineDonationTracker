@@ -1,4 +1,6 @@
-# Assessment 1
+# Online Donation Tracker
+
+A full-stack web application for NGOs to manage fundraising campaigns and accept online donations. Built with the MERN stack (MongoDB, Express, React, Node.js) and integrated with Stripe for payment processing.
 
 Assignment: **Software requirements analysis and design (Full-Stack CRUD Application Development with DevOps Practices)** - (Total Marks **20**)
 
@@ -90,3 +92,123 @@ We will send you an email to choose a Real-World project. If you face any diffic
 * Adherence to Git best practices and practical contributions.
 * Successful implementation, deploymentand CI/CD pipeline.
 * Problem-solving skills and the ability to go beyond basic requirements.
+
+---
+
+## Project Setup Instructions
+
+### Prerequisites
+
+- Node.js (v14 or higher)
+- MongoDB
+- Stripe account for payment processing
+
+### Environment Variables
+
+Create `.env` files in both the backend and frontend directories:
+
+#### Backend `.env`
+
+```
+MONGO_URI=your_mongodb_connection_string
+JWT_SECRET=your_jwt_secret_key
+PORT=5001
+STRIPE_SECRET_KEY=your_stripe_secret_key
+STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
+STRIPE_WEBHOOK_SECRET=your_stripe_webhook_secret
+```
+
+#### Frontend `.env`
+
+```
+REACT_APP_API_URL=http://localhost:5001
+```
+
+### Installation Steps
+
+1. **Clone the repository**
+
+```bash
+git clone <repository-url>
+cd OnlineDonationTracker
+```
+
+2. **Install backend dependencies**
+
+```bash
+cd backend
+npm install
+```
+
+3. **Install frontend dependencies**
+
+```bash
+cd ../frontend
+npm install
+```
+
+4. **Start the development servers**
+
+Backend:
+```bash
+cd backend
+npm run dev
+```
+
+Frontend:
+```bash
+cd frontend
+npm start
+```
+
+### Stripe Integration Setup
+
+1. **Create a Stripe account** at [stripe.com](https://stripe.com) if you don't have one.
+
+2. **Get your API keys** from the Stripe Dashboard:
+   - Publishable key: Dashboard → Developers → API Keys → Publishable key
+   - Secret key: Dashboard → Developers → API Keys → Secret key
+
+3. **Set up webhook endpoint**:
+   - In the Stripe Dashboard, go to Developers → Webhooks → Add endpoint
+   - Use your application URL + `/api/payment/webhook` as the endpoint URL
+   - Add the following events to listen for:
+     - `checkout.session.completed`
+     - `payment_intent.succeeded`
+     - `payment_intent.payment_failed`
+
+4. **Get webhook signing secret**:
+   - After creating the webhook, reveal and copy the signing secret
+   - Add this to your backend `.env` file as STRIPE_WEBHOOK_SECRET
+
+5. **Test the integration**:
+   - Use Stripe's test card numbers for testing:
+     - Success: 4242 4242 4242 4242
+     - Failure: 4000 0000 0000 0002
+   - Expiry date can be any future date, CVC can be any 3-digit number
+   - Use any name and valid email address
+
+### User Credentials for Testing
+
+You can register new users through the application, or use the following test account:
+
+- **Email**: test@example.com
+- **Password**: password123
+
+## Features
+
+- User authentication (login, register, profile management)
+- Create and manage fundraising causes
+- Browse active fundraising campaigns
+- Make online donations using Stripe
+- View donation history and receipts
+- Track fundraising progress
+
+## Tech Stack
+
+- **Frontend**: React, React Router, Tailwind CSS
+- **Backend**: Node.js, Express
+- **Database**: MongoDB
+- **Authentication**: JWT
+- **Payment Processing**: Stripe API
+- **CI/CD**: GitHub Actions
